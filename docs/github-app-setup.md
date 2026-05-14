@@ -9,6 +9,7 @@ Webhook:
   Disabled, unless you explicitly need it
 
 Repository permissions:
+  Contents: Read-only
   Issues: Read and write
   Pull requests: Read and write
   Metadata: Read-only

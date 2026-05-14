@@ -58,6 +58,7 @@ if not ALLOWED_REPO_KEYS and not ALLOWED_OWNER_KEYS:
 SESSION_TTL_SECONDS = int(os.getenv("SESSION_TTL_SECONDS", str(12 * 60 * 60)))
 
 ALLOWED_OPS = {
+    "git:fetch",
     "issue:create",
     "issue:update",
     "issue:comment",
@@ -185,6 +186,7 @@ def get_installation_token(repo: str) -> str:
             # installation token is restricted to the requested repository only.
             "repositories": [repo_name],
             "permissions": {
+                "contents": "read",
                 "issues": "write",
                 "pull_requests": "write",
             },
@@ -303,6 +305,7 @@ class SessionRequest(BaseModel):
     owners: list[str] | None = None
     ops: list[str] = Field(
         default=[
+            "git:fetch",
             "issue:create",
             "issue:update",
             "issue:comment",
@@ -487,6 +490,18 @@ def create_pull(body: PullCreate, session: dict = Depends(get_session)) -> dict:
             "draft": body.draft,
         },
     )
+
+
+class GitTokenRequest(BaseModel):
+    repo: str
+
+
+@app.post("/v1/git/token")
+def get_git_token(body: GitTokenRequest, session: dict = Depends(get_session)) -> dict:
+    authorize(session, body.repo, "git:fetch")
+    logger.info("github_op=git:fetch repo=%s", repo_key(body.repo))
+    token = get_installation_token(body.repo)
+    return {"token": token}
 
 
 @app.patch("/v1/pulls")

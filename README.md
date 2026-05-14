@@ -29,13 +29,13 @@ docs/secret-manager-safe-setup.md
 - Lets Codex obtain a short-lived proxy session token during the setup phase.
 - Gives Codex a restricted `gh` shim.
 - Allows only:
+  - `gh auth token` (repo-scoped, short-lived, fetch use)
   - `gh issue create`
   - `gh issue edit`
   - `gh issue comment`
   - `gh pr create`
   - `gh pr edit`
 - Blocks:
-  - `gh auth token`
   - `gh auth login`
   - `gh auth status`
   - `gh api`
@@ -106,6 +106,7 @@ You may set both. A repository is allowed if it matches `ALLOWED_REPOS`, or its 
 Minimum repository permissions:
 
 ```text
+Contents: Read-only
 Issues: Read and write
 Pull requests: Read and write
 Metadata: Read-only
