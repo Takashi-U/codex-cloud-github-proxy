@@ -57,7 +57,7 @@ def read_token() -> str:
         return f.read().strip()
 
 
-def call(method: str, path: str, payload: dict) -> None:
+def call(method: str, path: str, payload: dict) -> str:
     if not PROXY_URL:
         raise SystemExit("CODEX_GITHUB_PROXY_URL is not set")
 
@@ -73,7 +73,7 @@ def call(method: str, path: str, payload: dict) -> None:
 
     try:
         with urllib.request.urlopen(req, timeout=30) as res:
-            print(res.read().decode("utf-8"))
+            return res.read().decode("utf-8")
     except urllib.error.HTTPError as e:
         sys.stderr.write(e.read().decode("utf-8") + "\n")
         raise SystemExit(e.code)
@@ -138,48 +138,58 @@ def main() -> None:
     pr_edit.add_argument("--state", choices=["open", "closed"])
     pr_edit.add_argument("--base")
 
+    auth = sub.add_parser("auth")
+    auth_sub = auth.add_subparsers(dest="action", required=True)
+    auth_token = auth_sub.add_parser("token")
+    add_repo_arg(auth_token)
+
     args = parser.parse_args()
 
     if args.resource == "issue" and args.action == "create":
-        call("POST", "/v1/issues", {
+        print(call("POST", "/v1/issues", {
             "repo": require_repo(args.repo),
             "title": args.title,
             "body": args.body,
             "labels": args.label,
             "assignees": args.assignee,
-        })
+        }))
     elif args.resource == "issue" and args.action == "edit":
-        call("PATCH", "/v1/issues", {
+        print(call("PATCH", "/v1/issues", {
             "repo": require_repo(args.repo),
             "number": args.number,
             "title": args.title,
             "body": args.body,
             "state": args.state,
-        })
+        }))
     elif args.resource == "issue" and args.action == "comment":
-        call("POST", "/v1/issues/comments", {
+        print(call("POST", "/v1/issues/comments", {
             "repo": require_repo(args.repo),
             "number": args.number,
             "body": args.body,
-        })
+        }))
     elif args.resource == "pr" and args.action == "create":
-        call("POST", "/v1/pulls", {
+        print(call("POST", "/v1/pulls", {
             "repo": require_repo(args.repo),
             "title": args.title,
             "body": args.body,
             "head": args.head,
             "base": args.base,
             "draft": args.draft,
-        })
+        }))
     elif args.resource == "pr" and args.action == "edit":
-        call("PATCH", "/v1/pulls", {
+        print(call("PATCH", "/v1/pulls", {
             "repo": require_repo(args.repo),
             "number": args.number,
             "title": args.title,
             "body": args.body,
             "state": args.state,
             "base": args.base,
-        })
+        }))
+    elif args.resource == "auth" and args.action == "token":
+        data = json.loads(call("POST", "/v1/git/token", {
+            "repo": require_repo(args.repo),
+        }))
+        print(data["token"])
     else:
         raise SystemExit("unsupported command")
 
@@ -210,7 +220,10 @@ case "${1:-} ${2:-}" in
   "pr edit")
     exec codex-gh pr edit "${@:3}"
     ;;
-  "auth token"|"auth status"|"auth login")
+  "auth token")
+    exec codex-gh auth token "${@:3}"
+    ;;
+  "auth status"|"auth login")
     echo "Blocked: this environment uses a restricted GitHub proxy and does not expose GitHub tokens." >&2
     exit 2
     ;;
