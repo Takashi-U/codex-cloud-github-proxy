@@ -1,0 +1,35 @@
+# Codex GitHub Operation Rules
+
+This repository uses a restricted GitHub proxy.
+
+Do not use GitHub personal access tokens, `GH_TOKEN`, `GITHUB_TOKEN`, or stored GitHub CLI authentication.
+
+Use the provided restricted `gh` shim for GitHub issue and pull request operations.
+
+Allowed commands:
+
+```bash
+gh issue create --repo OWNER/REPO --title "..." --body "..."
+gh issue edit NUMBER --repo OWNER/REPO --title "..." --body "..." --state open|closed
+gh issue comment NUMBER --repo OWNER/REPO --body "..."
+gh pr create --repo OWNER/REPO --title "..." --body "..." --head BRANCH --base BRANCH
+gh pr edit NUMBER --repo OWNER/REPO --title "..." --body "..." --state open|closed --base BRANCH
+```
+
+Forbidden commands:
+
+```bash
+gh auth token
+gh auth login
+gh auth status
+gh api
+gh pr merge
+gh pr checkout
+gh pr list
+gh pr view
+git push
+```
+
+The `gh` command in this environment is not the official GitHub CLI. It is a restricted shim that sends allowed Issue/PR operations to the Cloud Run GitHub proxy.
+
+If a required GitHub operation is not supported by the restricted shim, stop and explain the missing operation instead of trying to bypass the proxy.
